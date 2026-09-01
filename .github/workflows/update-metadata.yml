@@ -2,7 +2,7 @@ name: Update ASN metadata
 
 on:
   schedule:
-    - cron: "23 */6 * * *"
+    - cron: "23 */1 * * *"
   workflow_dispatch:
 
 permissions:
