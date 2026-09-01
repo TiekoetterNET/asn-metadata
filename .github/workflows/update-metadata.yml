@@ -1,0 +1,39 @@
+name: Update ASN metadata
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: asn-metadata-writer
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      REQUESTED_ASNS_URL: https://www.tiekoetter.net/asn-metadata/requested-asns.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --requirement requirements.txt
+      - name: Fetch requested ASNs and update metadata
+        run: python scripts/update_metadata.py --requested-url "$REQUESTED_ASNS_URL"
+      - name: Commit metadata changes
+        run: |
+          if git diff --quiet -- data/asn-metadata.json; then
+            echo "Metadata is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/asn-metadata.json
+          git commit -m "Update ASN metadata"
+          git push
