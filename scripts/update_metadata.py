@@ -41,18 +41,32 @@ class WhoisClient:
     def lookup(self, asn: int) -> dict[str, str]:
         response = self._run([f"AS{asn}"])
         try:
-            return parse_whois_response(asn, response)
+            resolved = parse_whois_response(asn, response)
         except ValueError as initial_error:
             # Some WHOIS clients do not follow referral links unless they use
             # the whois:// scheme. ARIN occasionally returns a bare WHOIS host
             # in ResourceLink, so follow those registry hosts explicitly.
             for server in reversed(_find_referral_servers(response)):
-                referred_response = self._run(["-h", server, f"AS{asn}"])
                 try:
+                    referred_response = self._run(["-h", server, f"AS{asn}"])
                     return parse_whois_response(asn, referred_response)
-                except ValueError:
+                except (LookupError, ValueError):
                     continue
             raise initial_error
+
+        # Transferred legacy blocks can have an exact placeholder object at an
+        # upstream RIR plus a downstream WHOIS referral. Prefer the referred
+        # exact object instead of accepting values such as RIPE-6204 / RIPE NCC.
+        downstream_servers = _find_downstream_referral_servers(response, asn)
+        for server in reversed(downstream_servers):
+            try:
+                referred_response = self._run(["-h", server, f"AS{asn}"])
+                return parse_whois_response(asn, referred_response)
+            except (LookupError, ValueError):
+                continue
+        if downstream_servers:
+            raise LookupError(f"downstream WHOIS referral failed for AS{asn}")
+        return resolved
 
     def _run(self, arguments: list[str]) -> str:
         try:
@@ -135,8 +149,20 @@ def _parse_whois_blocks(response: str) -> list[WhoisBlock]:
 
 
 def _find_referral_servers(response: str) -> list[str]:
+    return _referral_servers_from_blocks(_parse_whois_blocks(response))
+
+
+def _find_downstream_referral_servers(response: str, asn: int) -> list[str]:
+    blocks = _parse_whois_blocks(response)
+    asn_index = _find_asn_block(blocks, asn)
+    if asn_index is None:
+        return []
+    return _referral_servers_from_blocks(blocks[asn_index:])
+
+
+def _referral_servers_from_blocks(blocks: list[WhoisBlock]) -> list[str]:
     servers: list[str] = []
-    for block in _parse_whois_blocks(response):
+    for block in blocks:
         for attribute in ("whois", "referralserver", "resourcelink"):
             for value in block.get(attribute, []):
                 candidate = value.strip()
@@ -261,7 +287,20 @@ def _timestamp() -> str:
 
 
 def _needs_lookup(record: dict[str, Any] | None) -> bool:
-    return not record or any(field not in record for field in REQUIRED_METADATA_FIELDS)
+    return (
+        not record
+        or any(field not in record for field in REQUIRED_METADATA_FIELDS)
+        or _is_transfer_placeholder(record)
+    )
+
+
+def _is_transfer_placeholder(record: dict[str, Any]) -> bool:
+    as_name = str(record.get("as_name", "")).strip()
+    return re.fullmatch(
+        r"(?:RIPE|APNIC|AFRINIC|LACNIC)(?:-ASNBLOCK)?-[0-9]+",
+        as_name,
+        re.IGNORECASE,
+    ) is not None
 
 
 def update_metadata(
