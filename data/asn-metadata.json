@@ -25,7 +25,7 @@
     "country": "US",
     "country_name": "United States",
     "flag": "🇺🇸",
-    "last_attempt": "2026-09-01T23:56:13Z",
+    "last_attempt": "2026-09-01T23:57:56Z",
     "last_success": "2026-09-01T19:59:34Z",
     "error": "ValueError: WHOIS response did not contain an exact AS701 object"
   },
@@ -739,6 +739,16 @@
     "last_attempt": "2026-09-01T23:46:35Z",
     "last_success": "2026-09-01T23:46:35Z"
   },
+  "59449": {
+    "as_name": "KonzolaNET",
+    "org_name": "Mitja Herbaj",
+    "country": "SI",
+    "country_name": "Slovenia",
+    "flag": "🇸🇮",
+    "source": "whois",
+    "last_attempt": "2026-09-01T23:57:56Z",
+    "last_success": "2026-09-01T23:57:56Z"
+  },
   "59570": {
     "as_name": "Hostingstudio",
     "org_name": "Jens Zimperfeld",
@@ -905,7 +915,7 @@
     "country": "CA",
     "country_name": "Canada",
     "flag": "🇨🇦",
-    "last_attempt": "2026-09-01T23:56:13Z",
+    "last_attempt": "2026-09-01T23:57:56Z",
     "last_success": "2026-09-01T19:59:46Z",
     "error": "ValueError: WHOIS response did not contain an exact AS199177 object"
   },
@@ -1258,6 +1268,16 @@
     "source": "whois",
     "last_attempt": "2026-09-01T23:46:52Z",
     "last_success": "2026-09-01T23:46:52Z"
+  },
+  "204931": {
+    "as_name": "PNOSOLUTIONS-AS",
+    "org_name": "PNO Solutions Limited",
+    "country": "GB",
+    "country_name": "United Kingdom",
+    "flag": "🇬🇧",
+    "source": "whois",
+    "last_attempt": "2026-09-01T23:57:57Z",
+    "last_success": "2026-09-01T23:57:57Z"
   },
   "205008": {
     "as_name": "HExpNetwork",
@@ -1658,6 +1678,16 @@
     "source": "whois",
     "last_attempt": "2026-09-01T23:47:05Z",
     "last_success": "2026-09-01T23:47:05Z"
+  },
+  "210577": {
+    "as_name": "WEGNER-AS",
+    "org_name": "Tobias Manfred Wegner",
+    "country": "DE",
+    "country_name": "Germany",
+    "flag": "🇩🇪",
+    "source": "whois",
+    "last_attempt": "2026-09-01T23:57:57Z",
+    "last_success": "2026-09-01T23:57:57Z"
   },
   "210578": {
     "as_name": "McPal",
@@ -2298,6 +2328,16 @@
     "source": "whois",
     "last_attempt": "2026-09-01T23:47:27Z",
     "last_success": "2026-09-01T23:47:27Z"
+  },
+  "218916": {
+    "as_name": "FIOD",
+    "org_name": "Fiscale Inlichtingen en Opsporingsdienst (FIOD)",
+    "country": "NL",
+    "country_name": "Netherlands",
+    "flag": "🇳🇱",
+    "source": "whois",
+    "last_attempt": "2026-09-01T23:57:57Z",
+    "last_success": "2026-09-01T23:57:57Z"
   },
   "218969": {
     "as_name": "SHEEPMC-NETWORKS",
