@@ -9,7 +9,7 @@ def country_metadata(country_code: str | None) -> tuple[str, str, str]:
     """Return a normalized alpha-2 code, English name, and emoji flag.
 
     Unknown or absent country codes deliberately produce empty strings so an
-    incomplete RDAP response does not prevent the ASN itself from being saved.
+    incomplete WHOIS response does not prevent the ASN itself from being saved.
     """
 
     if not country_code:

@@ -1,218 +1,193 @@
 #!/usr/bin/env python3
-"""Resolve requested autonomous systems through RDAP and update JSON metadata."""
+"""Resolve requested autonomous systems through WHOIS and update JSON metadata."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import requests
 
 from country_metadata import country_metadata
 
-DEFAULT_BOOTSTRAP_URL = "https://data.iana.org/rdap/asn.json"
 REQUIRED_METADATA_FIELDS = (
     "as_name",
     "org_name",
     "country",
     "country_name",
     "flag",
+    "source",
     "last_success",
 )
 
 
-class RDAPClient:
-    """Minimal ASN RDAP client using IANA's service bootstrap document."""
+WhoisBlock = dict[str, list[str]]
+WHOIS_ATTRIBUTE = re.compile(r"^([A-Za-z][A-Za-z0-9-]*):\s*(.*?)\s*$")
 
-    def __init__(self, bootstrap_url: str, timeout: float) -> None:
-        self.bootstrap_url = bootstrap_url
+
+class WhoisClient:
+    """Resolve AS metadata with the system WHOIS client and RIR referrals."""
+
+    def __init__(self, command: str, timeout: float) -> None:
+        self.command = command
         self.timeout = timeout
-        self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "Accept": "application/rdap+json, application/json",
-                "User-Agent": "asn-metadata/1.0 (+https://github.com/TiekoetterNET/asn-metadata)",
-            }
-        )
-        self._services: list[tuple[int, int, str]] | None = None
 
     def lookup(self, asn: int) -> dict[str, str]:
-        endpoint = self._endpoint_for(asn)
-        response = self.session.get(
-            f"{endpoint.rstrip('/')}/autnum/{asn}", timeout=self.timeout
-        )
-        response.raise_for_status()
-        payload = response.json()
-        if not isinstance(payload, dict):
-            raise ValueError(f"RDAP response for AS{asn} was not a JSON object")
-
-        code = _find_country_code(payload)
-        code, country_name, flag = country_metadata(code)
-        return {
-            "as_name": _text(payload.get("name")) or _text(payload.get("handle")),
-            "org_name": _find_org_name(payload),
-            "country": code,
-            "country_name": country_name,
-            "flag": flag,
-        }
-
-    def _endpoint_for(self, asn: int) -> str:
-        if self._services is None:
-            self._services = self._load_services()
-
-        for first, last, endpoint in self._services:
-            if first <= asn <= last:
-                return endpoint
-        raise LookupError(f"IANA RDAP bootstrap has no service for AS{asn}")
-
-    def _load_services(self) -> list[tuple[int, int, str]]:
-        response = self.session.get(self.bootstrap_url, timeout=self.timeout)
-        response.raise_for_status()
-        payload = response.json()
-        if not isinstance(payload, dict):
-            raise ValueError("IANA RDAP bootstrap was not a JSON object")
-        services: list[tuple[int, int, str]] = []
-
-        raw_services = payload.get("services", [])
-        if not isinstance(raw_services, list):
-            raise ValueError("IANA RDAP bootstrap services were not a JSON array")
-        for service in raw_services:
-            if not isinstance(service, list) or len(service) != 2:
-                continue
-            ranges, endpoints = service
-            if (
-                not isinstance(ranges, list)
-                or not isinstance(endpoints, list)
-                or not endpoints
-            ):
-                continue
-            endpoint = endpoints[0]
-            if not isinstance(endpoint, str):
-                continue
-            for value in ranges:
+        response = self._run([f"AS{asn}"])
+        try:
+            return parse_whois_response(asn, response)
+        except ValueError as initial_error:
+            # Some WHOIS clients do not follow referral links unless they use
+            # the whois:// scheme. ARIN occasionally returns a bare WHOIS host
+            # in ResourceLink, so follow those registry hosts explicitly.
+            for server in reversed(_find_referral_servers(response)):
+                referred_response = self._run(["-h", server, f"AS{asn}"])
                 try:
-                    first_text, separator, last_text = str(value).partition("-")
-                    first = int(first_text)
-                    last = int(last_text) if separator else first
+                    return parse_whois_response(asn, referred_response)
                 except ValueError:
                     continue
-                services.append((first, last, endpoint))
+            raise initial_error
 
-        if not services:
-            raise ValueError("IANA RDAP bootstrap did not contain any ASN services")
-        return services
+    def _run(self, arguments: list[str]) -> str:
+        try:
+            result = subprocess.run(
+                [self.command, *arguments],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=self.timeout,
+                check=False,
+            )
+        except FileNotFoundError as error:
+            raise LookupError(f"WHOIS command not found: {self.command}") from error
+        except subprocess.TimeoutExpired as error:
+            raise LookupError(f"WHOIS lookup timed out after {self.timeout:g}s") from error
+
+        if result.returncode != 0:
+            detail = result.stderr.strip() or f"exit status {result.returncode}"
+            raise LookupError(f"WHOIS lookup failed: {detail}")
+        return result.stdout
 
 
-def _text(value: Any) -> str:
-    if isinstance(value, str):
-        return value.strip()
-    if isinstance(value, list):
-        return " ".join(part.strip() for part in value if isinstance(part, str)).strip()
+def parse_whois_response(asn: int, response: str) -> dict[str, str]:
+    """Parse explicit ASN and organization attributes from referral output."""
+
+    blocks = _parse_whois_blocks(response)
+    asn_index = _find_asn_block(blocks, asn)
+    if asn_index is None:
+        raise ValueError(f"WHOIS response did not contain an exact AS{asn} object")
+
+    asn_block = blocks[asn_index]
+    org_block = _find_org_block(blocks, asn_index, asn_block)
+
+    as_name = _first_attribute(asn_block, "as-name", "asname", "owner")
+    if not as_name:
+        as_name = f"AS{asn}"
+
+    org_name = ""
+    country_code = ""
+    if org_block is not None:
+        org_name = _first_attribute(org_block, "org-name", "orgname", "owner")
+        country_code = _first_attribute(org_block, "country")
+
+    if not org_name:
+        org_name = _first_attribute(asn_block, "owner", "org-name", "orgname")
+    if not country_code:
+        country_code = _first_attribute(asn_block, "country")
+
+    code, country_name, flag = country_metadata(country_code)
+    return {
+        "as_name": as_name,
+        "org_name": org_name,
+        "country": code,
+        "country_name": country_name,
+        "flag": flag,
+        "source": "whois",
+    }
+
+
+def _parse_whois_blocks(response: str) -> list[WhoisBlock]:
+    blocks: list[WhoisBlock] = []
+    current: WhoisBlock = {}
+
+    for line in response.splitlines():
+        if not line.strip():
+            if current:
+                blocks.append(current)
+                current = {}
+            continue
+        match = WHOIS_ATTRIBUTE.match(line)
+        if match is None:
+            continue
+        name, value = match.groups()
+        current.setdefault(name.lower(), []).append(value.strip())
+
+    if current:
+        blocks.append(current)
+    return blocks
+
+
+def _find_referral_servers(response: str) -> list[str]:
+    servers: list[str] = []
+    for block in _parse_whois_blocks(response):
+        for attribute in ("whois", "referralserver", "resourcelink"):
+            for value in block.get(attribute, []):
+                candidate = value.strip()
+                if candidate.lower().startswith("whois://"):
+                    candidate = candidate[8:].split("/", 1)[0]
+                if not candidate.lower().startswith("whois."):
+                    continue
+                if not re.fullmatch(r"[A-Za-z0-9.-]+", candidate):
+                    continue
+                if candidate not in servers:
+                    servers.append(candidate)
+    return servers
+
+
+def _find_asn_block(blocks: list[WhoisBlock], asn: int) -> int | None:
+    for index, block in enumerate(blocks):
+        values = [*block.get("aut-num", []), *block.get("asnumber", [])]
+        if any(_is_exact_asn(value, asn) for value in values):
+            return index
+    return None
+
+
+def _is_exact_asn(value: str, asn: int) -> bool:
+    match = re.fullmatch(r"(?:AS)?0*([0-9]+)", value.strip(), re.IGNORECASE)
+    return match is not None and int(match.group(1)) == asn
+
+
+def _find_org_block(
+    blocks: list[WhoisBlock], asn_index: int, asn_block: WhoisBlock
+) -> WhoisBlock | None:
+    org_reference = _first_attribute(asn_block, "org")
+    if org_reference:
+        for block in blocks[asn_index + 1 :]:
+            organisation = _first_attribute(block, "organisation")
+            if organisation.casefold() == org_reference.casefold():
+                return block
+
+    # ARIN returns an adjacent OrgName object without an explicit reference in
+    # the ASN object. Restrict this fallback to objects following the exact ASN.
+    for block in blocks[asn_index + 1 :]:
+        if "orgname" in block:
+            return block
+    return None
+
+
+def _first_attribute(block: WhoisBlock, *names: str) -> str:
+    for name in names:
+        for value in block.get(name, []):
+            if value:
+                return value
     return ""
-
-
-def _vcard_properties(
-    entity: dict[str, Any],
-) -> Iterable[tuple[str, dict[str, Any], Any]]:
-    vcard = entity.get("vcardArray")
-    if not isinstance(vcard, list) or len(vcard) < 2 or not isinstance(vcard[1], list):
-        return
-    for property_value in vcard[1]:
-        if isinstance(property_value, list) and len(property_value) >= 4:
-            parameters = property_value[1]
-            if not isinstance(parameters, dict):
-                parameters = {}
-            yield str(property_value[0]).lower(), parameters, property_value[3]
-
-
-def _ordered_entities(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    raw_entities = payload.get("entities", [])
-    if not isinstance(raw_entities, list):
-        return []
-    entities = [item for item in raw_entities if isinstance(item, dict)]
-    return sorted(entities, key=_entity_priority)
-
-
-def _entity_priority(entity: dict[str, Any]) -> tuple[bool, bool, bool]:
-    roles = entity.get("roles", [])
-    if not isinstance(roles, list):
-        roles = []
-    handle = _text(entity.get("handle")).upper()
-    properties = list(_vcard_properties(entity))
-    is_org_entity = handle.startswith("ORG-") or any(
-        name == "kind" and _text(value).lower() == "org"
-        for name, _, value in properties
-    )
-    is_maintainer = handle.endswith("-MNT")
-    return (
-        "registrant" not in roles,
-        not is_org_entity,
-        is_maintainer,
-    )
-
-
-def _find_org_name(payload: dict[str, Any]) -> str:
-    for entity in _ordered_entities(payload):
-        properties = list(_vcard_properties(entity))
-        for preferred_property in ("org", "fn"):
-            for name, _, value in properties:
-                if name == preferred_property and _text(value):
-                    return _text(value)
-    return ""
-
-
-def _find_country_code(payload: dict[str, Any]) -> str:
-    top_level = _text(payload.get("country"))
-    if top_level:
-        return pycountry_lookup(top_level)
-
-    for entity in _ordered_entities(payload):
-        entity_country = pycountry_lookup(_text(entity.get("country")))
-        if entity_country:
-            return entity_country
-
-        for name, parameters, value in _vcard_properties(entity):
-            if name != "adr" or not isinstance(value, list):
-                continue
-            parameter_country = pycountry_lookup(_text(parameters.get("cc")))
-            if parameter_country:
-                return parameter_country
-            # RFC 6350: the seventh and final ADR component is the country.
-            if len(value) >= 7 and _text(value[6]):
-                country_value = _text(value[6])
-                country = pycountry_lookup(country_value)
-                if country:
-                    return country
-
-            # Some RIRs provide an empty structured ADR and put the complete
-            # postal address in the label parameter. The country is normally
-            # its final line, so check those lines from bottom to top.
-            label = _text(parameters.get("label"))
-            for line in reversed(label.splitlines()):
-                country = pycountry_lookup(line.strip())
-                if country:
-                    return country
-    return ""
-
-
-def pycountry_lookup(value: str) -> str:
-    """Resolve an alpha-2 code or country name without exposing pycountry here."""
-
-    code, _, _ = country_metadata(value)
-    if code:
-        return code
-
-    # Import lazily: most RDAP responses already contain a top-level code.
-    import pycountry
-
-    try:
-        return pycountry.countries.lookup(value).alpha_2
-    except LookupError:
-        return ""
 
 
 def normalize_requested_asns(payload: Any, source: str) -> list[int]:
@@ -292,7 +267,7 @@ def _needs_lookup(record: dict[str, Any] | None) -> bool:
 def update_metadata(
     requested_asns: list[int],
     metadata: dict[str, dict[str, Any]],
-    client: RDAPClient,
+    client: WhoisClient,
     refresh_all: bool,
 ) -> tuple[dict[str, dict[str, Any]], int]:
     if refresh_all:
@@ -307,7 +282,7 @@ def update_metadata(
         attempted_at = _timestamp()
         try:
             resolved = client.lookup(asn)
-        except (requests.RequestException, LookupError, ValueError) as error:
+        except (LookupError, ValueError) as error:
             failures += 1
             metadata[key] = {
                 **previous,
@@ -350,7 +325,11 @@ def parse_args() -> argparse.Namespace:
         help="refresh every requested and previously known ASN",
     )
     parser.add_argument("--timeout", type=float, default=30.0)
-    parser.add_argument("--bootstrap-url", default=DEFAULT_BOOTSTRAP_URL)
+    parser.add_argument(
+        "--whois-command",
+        default="whois",
+        help="WHOIS executable to use (default: whois)",
+    )
     return parser.parse_args()
 
 
@@ -363,7 +342,7 @@ def main() -> int:
             else load_requested_asns(args.requested)
         )
         metadata = load_metadata(args.metadata)
-        client = RDAPClient(args.bootstrap_url, args.timeout)
+        client = WhoisClient(args.whois_command, args.timeout)
         metadata, failures = update_metadata(
             requested_asns, metadata, client, args.refresh_all
         )
