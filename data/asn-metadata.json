@@ -25,7 +25,7 @@
     "country": "US",
     "country_name": "United States",
     "flag": "🇺🇸",
-    "last_attempt": "2026-09-02T06:00:20Z",
+    "last_attempt": "2026-09-02T11:31:36Z",
     "last_success": "2026-09-01T19:59:34Z",
     "error": "ValueError: WHOIS response did not contain an exact AS701 object"
   },
@@ -955,7 +955,7 @@
     "country": "CA",
     "country_name": "Canada",
     "flag": "🇨🇦",
-    "last_attempt": "2026-09-02T06:00:20Z",
+    "last_attempt": "2026-09-02T11:31:36Z",
     "last_success": "2026-09-01T19:59:46Z",
     "error": "ValueError: WHOIS response did not contain an exact AS199177 object"
   },
@@ -988,6 +988,16 @@
     "source": "whois",
     "last_attempt": "2026-09-01T23:46:41Z",
     "last_success": "2026-09-01T23:46:41Z"
+  },
+  "199676": {
+    "as_name": "John-Navarro",
+    "org_name": "John Leo Navarro",
+    "country": "PH",
+    "country_name": "Philippines",
+    "flag": "🇵🇭",
+    "source": "whois",
+    "last_attempt": "2026-09-02T11:31:36Z",
+    "last_success": "2026-09-02T11:31:36Z"
   },
   "199680": {
     "as_name": "Filip-Kszczot",
