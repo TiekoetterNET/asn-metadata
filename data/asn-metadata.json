@@ -25,7 +25,7 @@
     "country": "US",
     "country_name": "United States",
     "flag": "🇺🇸",
-    "last_attempt": "2026-09-02T22:42:54Z",
+    "last_attempt": "2026-09-03T01:14:59Z",
     "last_success": "2026-09-01T19:59:34Z",
     "error": "ValueError: WHOIS response did not contain an exact AS701 object"
   },
@@ -965,7 +965,7 @@
     "country": "CA",
     "country_name": "Canada",
     "flag": "🇨🇦",
-    "last_attempt": "2026-09-02T22:42:54Z",
+    "last_attempt": "2026-09-03T01:14:59Z",
     "last_success": "2026-09-01T19:59:46Z",
     "error": "ValueError: WHOIS response did not contain an exact AS199177 object"
   },
