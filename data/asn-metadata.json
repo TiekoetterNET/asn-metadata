@@ -25,7 +25,7 @@
     "country": "US",
     "country_name": "United States",
     "flag": "🇺🇸",
-    "last_attempt": "2026-09-05T13:55:37Z",
+    "last_attempt": "2026-09-05T16:52:43Z",
     "last_success": "2026-09-01T19:59:34Z",
     "error": "ValueError: WHOIS response did not contain an exact AS701 object"
   },
@@ -965,7 +965,7 @@
     "country": "CA",
     "country_name": "Canada",
     "flag": "🇨🇦",
-    "last_attempt": "2026-09-05T13:55:37Z",
+    "last_attempt": "2026-09-05T16:52:43Z",
     "last_success": "2026-09-01T19:59:46Z",
     "error": "ValueError: WHOIS response did not contain an exact AS199177 object"
   },
@@ -2288,6 +2288,16 @@
     "source": "whois",
     "last_attempt": "2026-09-01T23:47:23Z",
     "last_success": "2026-09-01T23:47:23Z"
+  },
+  "215715": {
+    "as_name": "AS-VSUA",
+    "org_name": "Valerii Solodovichenko",
+    "country": "UA",
+    "country_name": "Ukraine",
+    "flag": "🇺🇦",
+    "source": "whois",
+    "last_attempt": "2026-09-05T16:52:43Z",
+    "last_success": "2026-09-05T16:52:43Z"
   },
   "215743": {
     "as_name": "FOKKEMA-AS",
