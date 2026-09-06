@@ -25,7 +25,7 @@
     "country": "US",
     "country_name": "United States",
     "flag": "🇺🇸",
-    "last_attempt": "2026-09-06T09:32:25Z",
+    "last_attempt": "2026-09-06T13:44:11Z",
     "last_success": "2026-09-01T19:59:34Z",
     "error": "ValueError: WHOIS response did not contain an exact AS701 object"
   },
@@ -769,6 +769,16 @@
     "last_attempt": "2026-09-01T23:46:35Z",
     "last_success": "2026-09-01T23:46:35Z"
   },
+  "58736": {
+    "as_name": "DFLL-BD",
+    "org_name": "Dhaka Fiber Link Ltd.",
+    "country": "BD",
+    "country_name": "Bangladesh",
+    "flag": "🇧🇩",
+    "source": "whois",
+    "last_attempt": "2026-09-06T13:44:12Z",
+    "last_success": "2026-09-06T13:44:12Z"
+  },
   "59449": {
     "as_name": "KonzolaNET",
     "org_name": "Mitja Herbaj",
@@ -965,7 +975,7 @@
     "country": "CA",
     "country_name": "Canada",
     "flag": "🇨🇦",
-    "last_attempt": "2026-09-06T09:32:26Z",
+    "last_attempt": "2026-09-06T13:44:12Z",
     "last_success": "2026-09-01T19:59:46Z",
     "error": "ValueError: WHOIS response did not contain an exact AS199177 object"
   },
