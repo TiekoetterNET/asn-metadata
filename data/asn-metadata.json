@@ -25,7 +25,7 @@
     "country": "US",
     "country_name": "United States",
     "flag": "🇺🇸",
-    "last_attempt": "2026-09-16T20:16:39Z",
+    "last_attempt": "2026-09-16T23:03:41Z",
     "last_success": "2026-09-01T19:59:34Z",
     "error": "ValueError: WHOIS response did not contain an exact AS701 object"
   },
