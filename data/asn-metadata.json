@@ -25,7 +25,7 @@
     "country": "US",
     "country_name": "United States",
     "flag": "🇺🇸",
-    "last_attempt": "2026-09-20T01:19:29Z",
+    "last_attempt": "2026-09-20T06:33:08Z",
     "last_success": "2026-09-01T19:59:34Z",
     "error": "ValueError: WHOIS response did not contain an exact AS701 object"
   },
@@ -2709,6 +2709,16 @@
     "source": "whois",
     "last_attempt": "2026-09-14T08:57:33Z",
     "last_success": "2026-09-14T08:57:33Z"
+  },
+  "219297": {
+    "as_name": "c0redev-AS",
+    "org_name": "Vadim Deynichenko",
+    "country": "RU",
+    "country_name": "Russian Federation",
+    "flag": "🇷🇺",
+    "source": "whois",
+    "last_attempt": "2026-09-20T06:33:08Z",
+    "last_success": "2026-09-20T06:33:08Z"
   },
   "219412": {
     "as_name": "Oxiwave-Internet",
