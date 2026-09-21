@@ -91,12 +91,12 @@ class WhoisClient:
 
 
 def parse_whois_response(asn: int, response: str) -> dict[str, str]:
-    """Parse explicit ASN and organization attributes from referral output."""
+    """Parse matching ASN and organization attributes from referral output."""
 
     blocks = _parse_whois_blocks(response)
     asn_index = _find_asn_block(blocks, asn)
     if asn_index is None:
-        raise ValueError(f"WHOIS response did not contain an exact AS{asn} object")
+        raise ValueError(f"WHOIS response did not contain a matching AS{asn} object")
 
     asn_block = blocks[asn_index]
     org_block = _find_org_block(blocks, asn_index, asn_block)
@@ -180,14 +180,25 @@ def _referral_servers_from_blocks(blocks: list[WhoisBlock]) -> list[str]:
 def _find_asn_block(blocks: list[WhoisBlock], asn: int) -> int | None:
     for index, block in enumerate(blocks):
         values = [*block.get("aut-num", []), *block.get("asnumber", [])]
-        if any(_is_exact_asn(value, asn) for value in values):
+        if any(_asn_value_contains(value, asn) for value in values):
             return index
     return None
 
 
-def _is_exact_asn(value: str, asn: int) -> bool:
-    match = re.fullmatch(r"(?:AS)?0*([0-9]+)", value.strip(), re.IGNORECASE)
-    return match is not None and int(match.group(1)) == asn
+def _asn_value_contains(value: str, asn: int) -> bool:
+    """Return whether an ASN value identifies ``asn`` alone or in a range."""
+
+    match = re.fullmatch(
+        r"(?:AS)?0*([0-9]+)(?:\s*-\s*(?:AS)?0*([0-9]+))?",
+        value.strip(),
+        re.IGNORECASE,
+    )
+    if match is None:
+        return False
+
+    first = int(match.group(1))
+    last = int(match.group(2)) if match.group(2) is not None else first
+    return first <= asn <= last
 
 
 def _find_org_block(
@@ -201,7 +212,8 @@ def _find_org_block(
                 return block
 
     # ARIN returns an adjacent OrgName object without an explicit reference in
-    # the ASN object. Restrict this fallback to objects following the exact ASN.
+    # the ASN object. Restrict this fallback to objects following the matching
+    # ASN or ASN-range object.
     for block in blocks[asn_index + 1 :]:
         if "orgname" in block:
             return block
