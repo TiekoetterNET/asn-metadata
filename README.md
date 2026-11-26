@@ -33,7 +33,10 @@ Example generated record:
 
 When a lookup fails, `last_attempt` and a short `error` are recorded while all
 previously successful metadata, including `last_success`, is retained. A later
-incremental run retries records that have never completed successfully.
+incremental run retries records that have never completed successfully, but
+waits 24 hours after a failed attempt (`--retry-interval`) so that an ASN which
+cannot be resolved does not produce a commit on every run. The weekly refresh
+retries every record regardless.
 
 ## Automation
 
@@ -42,7 +45,7 @@ Both workflows fetch the requested ASN set from
 return a JSON array of integer ASNs. Ordering and duplicate entries are
 normalized in memory; the checked-in fixture is not overwritten.
 
-`update-metadata.yml` fetches that endpoint every six hours and resolves only
+`update-metadata.yml` fetches that endpoint every hour and resolves only
 new or incomplete entries. `refresh-metadata.yml` independently fetches it
 every Monday at 03:17 UTC and refreshes every requested or previously known
 ASN. Both workflows commit only `data/asn-metadata.json` when it changes.
@@ -79,11 +82,23 @@ To refresh all existing records as well as requested ASNs:
 python scripts/update_metadata.py --refresh-all
 ```
 
+To run the tests:
+
+```shell
+python -m unittest discover --start-directory tests
+```
+
 The system WHOIS client follows registry referrals. The updater also follows a
 downstream referral when an upstream RIR returns an exact transfer placeholder,
-as ARIN does for AS6204 before handing the query to RIPE. The parser uses only
-ASN objects that either identify the requested number directly or contain it in
-an assigned ASN range (for example, ARIN's `ASNumber: 701 - 705`). It uses only
+as ARIN does for AS6204 before handing the query to RIPE. When the client's
+default lookup returns no matching object, as happens for an ASN that has been
+transferred to another registry, the updater asks the five RIRs directly,
+starting with ARIN. If the client exits with an error after printing its
+answer, for example because an optional rwhois referral is unreachable, the
+answer is still used provided it contains an organization and a country. The
+parser uses only ASN objects that either identify the requested number directly
+or contain it in an assigned ASN range (for example, ARIN's
+`ASNumber: 701 - 705`). It uses only
 explicit `country` attributes on that object or its referenced organization;
 it never infers a country from postal-address text. Input is validated and
 output is written atomically in numeric ASN order. Records include

@@ -8,7 +8,7 @@ import json
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +26,17 @@ REQUIRED_METADATA_FIELDS = (
     "last_success",
 )
 
+# Queried in order when the client's default lookup returns no matching
+# object. ARIN comes first because it either holds the ASN itself or refers
+# its block to the responsible registry.
+RIR_WHOIS_SERVERS = (
+    "whois.arin.net",
+    "whois.ripe.net",
+    "whois.apnic.net",
+    "whois.lacnic.net",
+    "whois.afrinic.net",
+)
+
 
 WhoisBlock = dict[str, list[str]]
 WHOIS_ATTRIBUTE = re.compile(r"^([A-Za-z][A-Za-z0-9-]*):\s*(.*?)\s*$")
@@ -39,36 +50,64 @@ class WhoisClient:
         self.timeout = timeout
 
     def lookup(self, asn: int) -> dict[str, str]:
-        response = self._run([f"AS{asn}"])
+        visited: set[str] = set()
+        response, failure = self._run([f"AS{asn}"])
         try:
-            resolved = parse_whois_response(asn, response)
-        except ValueError as initial_error:
+            resolved = _parse_client_output(asn, response, failure)
+        except (LookupError, ValueError) as initial_error:
             # Some WHOIS clients do not follow referral links unless they use
             # the whois:// scheme. ARIN occasionally returns a bare WHOIS host
             # in ResourceLink, so follow those registry hosts explicitly.
-            for server in reversed(_find_referral_servers(response)):
+            servers = list(reversed(_find_referral_servers(response)))
+            if failure is None:
+                # An ASN transferred to another registry is answered by its
+                # former registry with an unmanaged-block notice and no
+                # referral, so ask the registries directly.
+                servers.extend(
+                    server for server in RIR_WHOIS_SERVERS if server not in servers
+                )
+            for server in servers:
+                if server in visited:
+                    continue
                 try:
-                    referred_response = self._run(["-h", server, f"AS{asn}"])
-                    return parse_whois_response(asn, referred_response)
+                    return self._lookup_at(asn, server, visited)
                 except (LookupError, ValueError):
                     continue
             raise initial_error
+        return self._follow_transfer(asn, response, resolved, visited)
 
+    def _lookup_at(self, asn: int, server: str, visited: set[str]) -> dict[str, str]:
+        visited.add(server)
+        response, failure = self._run(["-h", server, f"AS{asn}"])
+        resolved = _parse_client_output(asn, response, failure)
+        return self._follow_transfer(asn, response, resolved, visited)
+
+    def _follow_transfer(
+        self, asn: int, response: str, resolved: dict[str, str], visited: set[str]
+    ) -> dict[str, str]:
         # Transferred legacy blocks can have an exact placeholder object at an
         # upstream RIR plus a downstream WHOIS referral. Prefer the referred
         # exact object instead of accepting values such as RIPE-6204 / RIPE NCC.
         downstream_servers = _find_downstream_referral_servers(response, asn)
         for server in reversed(downstream_servers):
+            if server in visited:
+                continue
             try:
-                referred_response = self._run(["-h", server, f"AS{asn}"])
-                return parse_whois_response(asn, referred_response)
+                return self._lookup_at(asn, server, visited)
             except (LookupError, ValueError):
                 continue
         if downstream_servers:
             raise LookupError(f"downstream WHOIS referral failed for AS{asn}")
         return resolved
 
-    def _run(self, arguments: list[str]) -> str:
+    def _run(self, arguments: list[str]) -> tuple[str, LookupError | None]:
+        """Return the client's output and, if it exited unsuccessfully, why.
+
+        The output is kept on failure because the client can print a complete
+        answer and then fail on an optional referral, such as an unreachable
+        rwhois server.
+        """
+
         try:
             result = subprocess.run(
                 [self.command, *arguments],
@@ -86,8 +125,28 @@ class WhoisClient:
 
         if result.returncode != 0:
             detail = result.stderr.strip() or f"exit status {result.returncode}"
-            raise LookupError(f"WHOIS lookup failed: {detail}")
-        return result.stdout
+            return result.stdout, LookupError(f"WHOIS lookup failed: {detail}")
+        return result.stdout, None
+
+
+def _parse_client_output(
+    asn: int, response: str, failure: LookupError | None
+) -> dict[str, str]:
+    """Parse WHOIS output, trusting a failed client only for a complete record.
+
+    A failed client may also have been cut off mid-response, which would
+    otherwise replace good metadata with a record missing its organization.
+    """
+
+    try:
+        resolved = parse_whois_response(asn, response)
+    except ValueError:
+        if failure is not None:
+            raise failure
+        raise
+    if failure is not None and not (resolved["org_name"] and resolved["country"]):
+        raise failure
+    return resolved
 
 
 def parse_whois_response(asn: int, response: str) -> dict[str, str]:
@@ -165,10 +224,10 @@ def _referral_servers_from_blocks(blocks: list[WhoisBlock]) -> list[str]:
     for block in blocks:
         for attribute in ("whois", "referralserver", "resourcelink"):
             for value in block.get(attribute, []):
-                candidate = value.strip()
-                if candidate.lower().startswith("whois://"):
+                candidate = value.strip().lower()
+                if candidate.startswith("whois://"):
                     candidate = candidate[8:].split("/", 1)[0]
-                if not candidate.lower().startswith("whois."):
+                if not candidate.startswith("whois."):
                     continue
                 if not re.fullmatch(r"[A-Za-z0-9.-]+", candidate):
                     continue
@@ -298,12 +357,37 @@ def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
-def _needs_lookup(record: dict[str, Any] | None) -> bool:
-    return (
-        not record
-        or any(field not in record for field in REQUIRED_METADATA_FIELDS)
-        or _is_transfer_placeholder(record)
-    )
+def _needs_lookup(
+    record: dict[str, Any] | None, now: datetime, retry_interval: timedelta
+) -> bool:
+    if not record:
+        return True
+    incomplete = any(
+        field not in record for field in REQUIRED_METADATA_FIELDS
+    ) or _is_transfer_placeholder(record)
+    return incomplete and not _failed_recently(record, now, retry_interval)
+
+
+def _failed_recently(
+    record: dict[str, Any], now: datetime, retry_interval: timedelta
+) -> bool:
+    """Return whether the last attempt failed less than ``retry_interval`` ago.
+
+    Without this, an ASN that cannot be resolved is retried by every
+    incremental run, and each run commits nothing but a new ``last_attempt``.
+    """
+
+    if "error" not in record:
+        return False
+    try:
+        attempted_at = datetime.fromisoformat(
+            str(record.get("last_attempt", "")).replace("Z", "+00:00")
+        )
+    except ValueError:
+        return False
+    if attempted_at.tzinfo is None:
+        attempted_at = attempted_at.replace(tzinfo=timezone.utc)
+    return now - attempted_at < retry_interval
 
 
 def _is_transfer_placeholder(record: dict[str, Any]) -> bool:
@@ -320,11 +404,17 @@ def update_metadata(
     metadata: dict[str, dict[str, Any]],
     client: WhoisClient,
     refresh_all: bool,
+    retry_interval: timedelta,
 ) -> tuple[dict[str, dict[str, Any]], int]:
     if refresh_all:
         targets = sorted({*requested_asns, *(int(key) for key in metadata)})
     else:
-        targets = [asn for asn in requested_asns if _needs_lookup(metadata.get(str(asn)))]
+        now = datetime.now(timezone.utc)
+        targets = [
+            asn
+            for asn in requested_asns
+            if _needs_lookup(metadata.get(str(asn)), now, retry_interval)
+        ]
 
     failures = 0
     for asn in targets:
@@ -377,6 +467,16 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--timeout", type=float, default=30.0)
     parser.add_argument(
+        "--retry-interval",
+        type=float,
+        default=24.0,
+        metavar="HOURS",
+        help=(
+            "hours to wait before an incremental run retries a failed lookup "
+            "(default: 24; ignored with --refresh-all)"
+        ),
+    )
+    parser.add_argument(
         "--whois-command",
         default="whois",
         help="WHOIS executable to use (default: whois)",
@@ -395,7 +495,11 @@ def main() -> int:
         metadata = load_metadata(args.metadata)
         client = WhoisClient(args.whois_command, args.timeout)
         metadata, failures = update_metadata(
-            requested_asns, metadata, client, args.refresh_all
+            requested_asns,
+            metadata,
+            client,
+            args.refresh_all,
+            timedelta(hours=args.retry_interval),
         )
         write_metadata(args.metadata, metadata)
     except (
