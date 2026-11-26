@@ -320,6 +320,16 @@
     "last_attempt": "2026-11-23T12:43:38Z",
     "last_success": "2026-11-23T12:43:38Z"
   },
+  "19330": {
+    "as_name": "TRITAN-INTERNET-LLC",
+    "org_name": "Tritan Internet LLC",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:00Z",
+    "last_success": "2026-11-26T01:18:00Z"
+  },
   "20495": {
     "as_name": "WEDARE",
     "org_name": "We Dare B.V.",
@@ -340,6 +350,16 @@
     "last_attempt": "2026-11-23T12:43:39Z",
     "last_success": "2026-11-23T12:43:39Z"
   },
+  "21738": {
+    "as_name": "ROZINT",
+    "org_name": "Rozint",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:01Z",
+    "last_success": "2026-11-26T01:18:01Z"
+  },
   "21868": {
     "as_name": "A10H",
     "org_name": "A10H LLC",
@@ -359,6 +379,16 @@
     "source": "whois",
     "last_attempt": "2026-11-23T12:43:40Z",
     "last_success": "2026-11-23T12:43:40Z"
+  },
+  "23428": {
+    "as_name": "SERVERFORGE",
+    "org_name": "ServerForge LLC",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:01Z",
+    "last_success": "2026-11-26T01:18:01Z"
   },
   "24381": {
     "as_name": "BGPE-AS",
@@ -390,6 +420,26 @@
     "last_attempt": "2026-11-23T12:43:40Z",
     "last_success": "2026-11-23T12:43:40Z"
   },
+  "25759": {
+    "as_name": "F4-NETWORKS",
+    "org_name": "Rozint",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:01Z",
+    "last_success": "2026-11-26T01:18:01Z"
+  },
+  "26006": {
+    "as_name": "EXODO",
+    "org_name": "Exodo LLC",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:01Z",
+    "last_success": "2026-11-26T01:18:01Z"
+  },
   "26533": {
     "as_name": "STIBARC-AS-01",
     "org_name": "STiBaRC",
@@ -410,6 +460,16 @@
     "last_attempt": "2026-11-23T12:43:41Z",
     "last_success": "2026-11-23T12:43:41Z"
   },
+  "30114": {
+    "as_name": "DECIMA-LLC",
+    "org_name": "Decima LLC",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:01Z",
+    "last_success": "2026-11-26T01:18:01Z"
+  },
   "30179": {
     "as_name": "DWS-01",
     "org_name": "DWS",
@@ -419,6 +479,26 @@
     "source": "whois",
     "last_attempt": "2026-11-23T12:43:41Z",
     "last_success": "2026-11-23T12:43:41Z"
+  },
+  "30690": {
+    "as_name": "KAZEHANA-NETWORKS",
+    "org_name": "Kazehana Networks LLC",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:01Z",
+    "last_success": "2026-11-26T01:18:01Z"
+  },
+  "31543": {
+    "as_name": "MYNET-AS",
+    "org_name": "myNet GmbH",
+    "country": "AT",
+    "country_name": "Austria",
+    "flag": "🇦🇹",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:01Z",
+    "last_success": "2026-11-26T01:18:01Z"
   },
   "32097": {
     "as_name": "WII",
@@ -499,6 +579,16 @@
     "source": "whois",
     "last_attempt": "2026-11-23T12:43:44Z",
     "last_success": "2026-11-23T12:43:44Z"
+  },
+  "36090": {
+    "as_name": "F4-INTERNET-EXCHANGE",
+    "org_name": "F4 Networks",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:02Z",
+    "last_success": "2026-11-26T01:18:02Z"
   },
   "38230": {
     "as_name": "NAVICENET-AS-AP",
@@ -690,6 +780,16 @@
     "last_attempt": "2026-11-23T12:43:49Z",
     "last_success": "2026-11-23T12:43:49Z"
   },
+  "47689": {
+    "as_name": "Pudu",
+    "org_name": "Pudu, LLC",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:02Z",
+    "last_success": "2026-11-26T01:18:02Z"
+  },
   "48818": {
     "as_name": "AS-NETSER-INC",
     "org_name": "NETSER INC",
@@ -789,6 +889,26 @@
     "source": "whois",
     "last_attempt": "2026-11-23T12:43:53Z",
     "last_success": "2026-11-23T12:43:53Z"
+  },
+  "52210": {
+    "as_name": "ACCURIS-TECHNOLOGIES",
+    "org_name": "Accuris Technologies Ltd.",
+    "country": "CA",
+    "country_name": "Canada",
+    "flag": "🇨🇦",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:02Z",
+    "last_success": "2026-11-26T01:18:02Z"
+  },
+  "53343": {
+    "as_name": "SCN",
+    "org_name": "Ntrix Infrastructure",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:02Z",
+    "last_success": "2026-11-26T01:18:02Z"
   },
   "53727": {
     "as_name": "AS-PENGUIN",
@@ -1349,6 +1469,16 @@
     "source": "whois",
     "last_attempt": "2026-11-23T12:44:10Z",
     "last_success": "2026-11-23T12:44:10Z"
+  },
+  "200242": {
+    "as_name": "de-theirs",
+    "org_name": "Ember Ana Reimer",
+    "country": "DE",
+    "country_name": "Germany",
+    "flag": "🇩🇪",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:02Z",
+    "last_success": "2026-11-26T01:18:02Z"
   },
   "200326": {
     "as_name": "RANDHOST",
@@ -2830,6 +2960,16 @@
     "last_attempt": "2026-11-23T12:45:04Z",
     "last_success": "2026-11-23T12:45:04Z"
   },
+  "213801": {
+    "as_name": "NATHANMOORE",
+    "org_name": "Nathan Moore",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:02Z",
+    "last_success": "2026-11-26T01:18:02Z"
+  },
   "213880": {
     "as_name": "JORGE-JANAITE-NETO",
     "org_name": "Jorge Janaite Neto",
@@ -2890,6 +3030,16 @@
     "last_attempt": "2026-11-23T12:45:06Z",
     "last_success": "2026-11-23T12:45:06Z"
   },
+  "214329": {
+    "as_name": "BGP-Network",
+    "org_name": "BGP Network LLC",
+    "country": "SA",
+    "country_name": "Saudi Arabia",
+    "flag": "🇸🇦",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:03Z",
+    "last_success": "2026-11-26T01:18:03Z"
+  },
   "214344": {
     "as_name": "Hanxun-Xu",
     "org_name": "Hanxun Xu",
@@ -2919,6 +3069,16 @@
     "source": "whois",
     "last_attempt": "2026-11-23T12:45:07Z",
     "last_success": "2026-11-23T12:45:07Z"
+  },
+  "214430": {
+    "as_name": "xronos",
+    "org_name": "Takahiro Fukushima",
+    "country": "JP",
+    "country_name": "Japan",
+    "flag": "🇯🇵",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:03Z",
+    "last_success": "2026-11-26T01:18:03Z"
   },
   "214451": {
     "as_name": "R3ido101",
@@ -3140,6 +3300,16 @@
     "last_attempt": "2026-11-23T12:45:15Z",
     "last_success": "2026-11-23T12:45:15Z"
   },
+  "215510": {
+    "as_name": "UFDROHT",
+    "org_name": "ufdroht.net - Internet Service GmbH",
+    "country": "AT",
+    "country_name": "Austria",
+    "flag": "🇦🇹",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:03Z",
+    "last_success": "2026-11-26T01:18:03Z"
+  },
   "215517": {
     "as_name": "WEITI-HOME",
     "org_name": "Tim Weippert",
@@ -3270,6 +3440,26 @@
     "last_attempt": "2026-11-23T12:45:19Z",
     "last_success": "2026-11-23T12:45:19Z"
   },
+  "216052": {
+    "as_name": "CDUBS-NET",
+    "org_name": "Craig Schulz",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:03Z",
+    "last_success": "2026-11-26T01:18:03Z"
+  },
+  "216107": {
+    "as_name": "FRUMENTUM",
+    "org_name": "Noah van der Aa trading as Frumentum Media",
+    "country": "NL",
+    "country_name": "Netherlands",
+    "flag": "🇳🇱",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:03Z",
+    "last_success": "2026-11-26T01:18:03Z"
+  },
   "216126": {
     "as_name": "James-Ledger",
     "org_name": "James Ledger",
@@ -3289,6 +3479,16 @@
     "source": "whois",
     "last_attempt": "2026-11-23T12:45:20Z",
     "last_success": "2026-11-23T12:45:20Z"
+  },
+  "216242": {
+    "as_name": "JUTLEY-AS",
+    "org_name": "Jeremy Utley",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:04Z",
+    "last_success": "2026-11-26T01:18:04Z"
   },
   "216249": {
     "as_name": "PHOTONSPARK",
@@ -3720,6 +3920,16 @@
     "last_attempt": "2026-11-23T12:45:36Z",
     "last_success": "2026-11-23T12:45:36Z"
   },
+  "328112": {
+    "as_name": "Linux-Based-Systems-Design-AS",
+    "org_name": "Linux Based Systems Design SA (Pty) Ltd",
+    "country": "ZA",
+    "country_name": "South Africa",
+    "flag": "🇿🇦",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:04Z",
+    "last_success": "2026-11-26T01:18:04Z"
+  },
   "393577": {
     "as_name": "TRITAN-DEVELOPMENT",
     "org_name": "Tritan Development",
@@ -3759,6 +3969,16 @@
     "source": "whois",
     "last_attempt": "2026-11-23T12:45:37Z",
     "last_success": "2026-11-23T12:45:37Z"
+  },
+  "400967": {
+    "as_name": "ASSURED-NETWORKS",
+    "org_name": "Assured Networks",
+    "country": "US",
+    "country_name": "United States",
+    "flag": "🇺🇸",
+    "source": "whois",
+    "last_attempt": "2026-11-26T01:18:04Z",
+    "last_success": "2026-11-26T01:18:04Z"
   },
   "401753": {
     "as_name": "BIXCE",
